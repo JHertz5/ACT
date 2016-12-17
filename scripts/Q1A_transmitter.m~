@@ -1,0 +1,41 @@
+clc
+close all
+
+%1:17:50 timestap for panopto presentation in final lecture
+% Direct Sequence QPSK
+
+%add data directory to path
+if contains(pwd, 'ACT')
+    dataPath = strcat( extractBefore(pwd, 'ACT'), 'ACT/data');
+    addpath(char(dataPath));
+else
+    dataPath = ''; %dataPath is empty vector
+    fprintf('Move to ACT directory\n');
+end
+
+%% Create shift register
+
+
+%a = fi(8,0,4,0)
+
+pnPolynomialDegree = 4;
+pnRegister1 = ones(pnPolynomialDegree,1, 'logical')
+codeLength = 2^(pnPolynomialDegree) - 1;
+pnSequence1
+
+pnRegister1 = fuStepShiftRegister(pnRegister1, 0)
+pnRegister1 = fuStepShiftRegister(pnRegister1, 0)
+pnRegister1 = fuStepShiftRegister(pnRegister1, 1)
+
+for i = 1:codeLength
+
+    pn1
+    
+    
+end
+
+% if ~isempty(dataPath)
+%     save(char(strcat(dataPath, '/wine_separatedData')),'training_classes','validation_classes','testing_classes','training_raw','validation_raw','testing_raw','training_norm','validation_norm','testing_norm')
+% else
+%     save('wine_separatedData','training_classes','validation_classes','testing_classes','training_raw','validation_raw','testing_raw','training_norm','validation_norm','testing_norm')
+% end

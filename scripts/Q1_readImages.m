@@ -10,20 +10,22 @@ else
     fprintf('Move to ACT directory\n');
 end
 
-%% Read Photo
+%% Read & Convert Photos
 
 fprintf('Extracting\n')
 img1_raw = imread('Photo1.jpg');
 img2_raw = imread('Photo2.jpg');
 img3_raw = imread('Photo3.jpg');
 
-figure
-subplot(1,3,1)
-imshow(img1_raw)
-subplot(1,3,2)
-imshow(img2_raw)
-subplot(1,3,3)
-imshow(img3_raw)
+if (exist('showPlots', 'var') && showPlots == true)
+    figure
+    subplot(1,3,1)
+    imshow(img1_raw)
+    subplot(1,3,2)
+    imshow(img2_raw)
+    subplot(1,3,3)
+    imshow(img3_raw)
+end
 
 imgHeight = size(img1_raw, 1);
 imgWidth  = size(img1_raw, 2);
@@ -87,6 +89,7 @@ for k = 1:imgDepth
     end
 end
 
+fprintf('Checking reconstructions')
 if img1_raw ~= img1_reconstructed
     fprintf('Image 1 reconstruction is incorrect');
 end
@@ -99,11 +102,20 @@ if img3_raw ~= img3_reconstructed
     fprintf('Image 3 reconstruction is incorrect');
 end
 
-figure
-subplot(1,3,1)
-imshow(img1_reconstructed)
-subplot(1,3,2)
-imshow(img2_reconstructed)
-subplot(1,3,3)
-imshow(img3_reconstructed)
+if (exist('showPlots', 'var') && showPlots == true)
+    figure
+    subplot(1,3,1)
+    imshow(img1_reconstructed)
+    subplot(1,3,2)
+    imshow(img2_reconstructed)
+    subplot(1,3,3)
+    imshow(img3_reconstructed)
+end
 
+%% Save Data
+
+if ~isempty(dataPath)
+    save(char(strcat(dataPath, '/PhotoVectors')),'img1_binVector','img2_binVector','img2_binVector')
+else
+    save('PhotoVectors','img1_binVector','img2_binVector','img2_binVector')
+end

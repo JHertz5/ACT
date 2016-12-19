@@ -1,9 +1,6 @@
 clc
 close all
 
-% 1:17:50 timestamp for panopto presentation in final lecture
-% Direct Sequence QPSK
-
 %add data directory to path
 if contains(pwd, 'ACT')
     dataPath = strcat( extractBefore(pwd, 'ACT'), 'ACT/data');
@@ -13,8 +10,15 @@ else
     fprintf('Move to ACT directory\n');
 end
 
+
+%% Initialise Values
+
 X = 8;  % H => 8
 Y = 10; % J => 10
+
+carrierFreq = 1;
+carrierAmp = 1;
+phi = X + 2*Y;
 
 %% Generate PN sequences
 
@@ -62,7 +66,6 @@ goldSeq3 = fGoldSeq(pn1Seq, pn2Seq, delayGold + 2); % gold sequence for user 3 u
 %% Plot sequences
 
 figure
-title('PN and Gold Sequences')
 
 subplot (2,2,1) % top left
 stairs(pn1Seq, 'LineWidth', 2, 'Marker', 'o')
@@ -77,28 +80,22 @@ subplot (3,2,2) % top right
 stairs(goldSeq1, 'LineWidth', 2, 'Marker', 'o')
 ylabel('Gold Seq 1')
 
-subplot (3,2,4) % top right
+subplot (3,2,4) % middle right
 stairs(goldSeq2, 'LineWidth', 2, 'Marker', 'o')
 ylabel('Gold Seq 2')
 
-subplot (3,2,6) % top right
+subplot (3,2,6) % bottom right
 stairs(goldSeq3, 'LineWidth', 2, 'Marker', 'o')
 ylabel('Gold Seq 3')
 xlabel('Sequence index')
 
-%% QPSK on image
+%% Read image into vector
 
-image2 = imread('Photo2.jpg');
+image1 = imread('Photo1.jpg');
 figure
-imshow(image2);
+imshow(image1);
 
-figure
-image2_red(:,:,1) = image2(:,:,1);
-image2_red(:,:,2) = zeros(112,160,'uint8');
-image2_red(:,:,3) = zeros(112,160,'uint8');
-
-imshow(image2_red);
-
+%%
 
 % if ~isempty(dataPath)
 %     save(char(strcat(dataPath, '/wine_separatedData')),'training_classes','validation_classes','testing_classes','training_raw','validation_raw','testing_raw','training_norm','validation_norm','testing_norm')

@@ -115,7 +115,7 @@ end
 %% Save Data
 
 if ~isempty(dataPath)
-    save(char(strcat(dataPath, '/PhotoVectors')),'img1_binVector','img2_binVector','img2_binVector')
+    save(char(strcat(dataPath, '/PhotoVectors')),'img1_binVector','img2_binVector','img3_binVector')
 else
-    save('PhotoVectors','img1_binVector','img2_binVector','img2_binVector')
+    save('PhotoVectors','img1_binVector','img2_binVector','img3_binVector')
 end

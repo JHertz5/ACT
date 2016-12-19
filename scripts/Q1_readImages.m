@@ -89,7 +89,7 @@ for k = 1:imgDepth
     end
 end
 
-fprintf('Checking reconstructions')
+fprintf('Checking reconstructions\n')
 if img1_raw ~= img1_reconstructed
     fprintf('Image 1 reconstruction is incorrect');
 end

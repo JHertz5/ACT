@@ -14,12 +14,12 @@ if ~(exist('showPlots', 'var') && showPlots == true)
     fprintf('showPlots is not true\n')
 end
 
-fprintf('Q1A - DS-QPSK Transmitter and Channel\n')
+fprintf('Q1A - DS-QPSK Receiver\n')
 
 %% Initialise Values
 
-% Load pre-processed input images
 load ImageVectors
+load Q1A_transmitterOutput
 
 X = 8;  % H => 8
 Y = 10; % J => 10
@@ -86,33 +86,38 @@ end
 
 fprintf('\t\tComplete\n')
 
-%% Perform DS-QPSK modulation
+%% Perform DS-QPSK demodulation
 
-fprintf('\tPerforming DS-QPSK modulation ...\n')
-
-symbols1 = fDSQPSKModulator(img1, goldSeq1, phi);
-symbols2 = fDSQPSKModulator(img2, goldSeq2, phi);
-symbols3 = fDSQPSKModulator(img3, goldSeq3, phi);
+fprintf('\tPerforming DS-QPSK de-modulation ...\n')
+fprintf('\t\tDe-modulating image 1\n')
+imgReceived1 = fDSQPSKDemodulator(symbols1, goldSeq1, phi);
+fprintf('\t\tDe-modulating image 2\n')
+imgReceived2 = fDSQPSKDemodulator(symbols2, goldSeq2, phi);
+fprintf('\t\tDe-modulating image 3\n')
+imgReceived3 = fDSQPSKDemodulator(symbols3, goldSeq3, phi);
 
 if exist('showPlots', 'var') && showPlots == true
+    % Plot constellation diagram
     figure
     plot( real(symbols1), imag(symbols1), 'x' )
     line([-1.5  1.5], [0 0], 'Color', 'black') % x axis line
     line([0 0], [-1.5  1.5], 'Color', 'black') % y axis line
-    title('Constellation Diagram of QPSK symbols for Image 1')
+    title('Constellation Diagram of QPSK symbols')
     ylabel('Imaginary Axis')
     xlabel('Real Axis')
     grid on
+    
+    % Display images
+    figure
+    subplot(1,3,1)
+    fprintf('\t\tPlotting image 1\n')
+    fImageSink(img1, imgSize, imgW, imgH)
+    subplot(1,3,2)
+    fprintf('\t\tPlotting image 2\n')
+    fImageSink(img2, imgSize, imgW, imgH)
+    subplot(1,3,3)
+    fprintf('\t\tPlotting image 3\n')
+    fImageSink(img3, imgSize, imgW, imgH)
 end
 
 fprintf('\t\tComplete\n')
-
-%% Save Variables
-
-if ~isempty(dataPath)
-    save(char(strcat(dataPath, '/Q1A_transmitterOutput')),'symbols1','symbols2','symbols3')
-else
-    save('Q1A_transmitterOutput','symbols1','symbols2','symbols3')
-end
-
-%% TODO: Channel, Saving Channel output

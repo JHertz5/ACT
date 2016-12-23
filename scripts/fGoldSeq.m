@@ -14,11 +14,11 @@
 % GoldSeq (Wx1 Integer) = W bits of 1's and 0's
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [GoldSeq]=fGoldSeq(mseq1,mseq2,shift)
+function [ goldSeq ] = fGoldSeq( MSeq1, MSeq2, shift )
 
-codeLength = size(mseq1, 1); % W
+codeLength = length(MSeq1); % W
 
-GoldSeq = zeros(codeLength, 1); % pre-allocate memory
+goldSeq = zeros(codeLength, 1); % pre-allocate memory
 
 for seqIndex = 1:codeLength
     % find delayed index 
@@ -28,7 +28,7 @@ for seqIndex = 1:codeLength
         seq2Index = seqIndex + shift;
     end
     
-    GoldSeq(seqIndex) = mod(mseq1(seqIndex) + mseq2(seq2Index), 2);
+    goldSeq(seqIndex) = mod(MSeq1(seqIndex) + MSeq2(seq2Index), 2);
 end
 
 end

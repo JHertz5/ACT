@@ -15,4 +15,23 @@
 % None
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function fImageSink(bitsIn,Q,x,y)
+function fImageSink(bitsIn,Q,imgW,imgH)
+
+imgD = 3; % R G B = 3 layers
+img_reconstruction = zeros(imgH, imgW, imgD, 'uint8');
+
+layerSize = imgW * imgH;
+
+for k = 1 : imgD
+    for j = 1 : imgW
+        for i = 1 : imgH
+           byteStart = ((k-1)*layerSize + (imgH)*(j-1) + (i-1))*8 + 1;
+            byteEnd   = ((k-1)*layerSize + (imgH)*(j-1) + i)*8;
+            img_reconstruction(i,j,k) = bi2de( bitsIn(byteStart:byteEnd)' );
+        end
+    end
+end
+
+imshow(img_reconstruction)
+
+end

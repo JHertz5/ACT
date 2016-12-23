@@ -12,4 +12,27 @@
 % MSeq (Wx1 Integers) = W bits of 1's and 0's
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [MSeq]=fMSeqGen(coeffs)
+function [ MSeq ] = fMSeqGen( coeffs )
+
+MPolynomialDegree = length(coeffs) - 1;
+MRegister = ones(MPolynomialDegree, 1, 'uint8');
+
+seqLength = 2^(MPolynomialDegree) - 1;
+MSeq = zeros(seqLength, 1);
+
+feedbackIndices = coeffs(2:end) == 1;
+for seqIndex = 1:seqLength
+    
+    MSeq(seqIndex) = MRegister(MPolynomialDegree);
+    
+    MInput = mod(sum(MRegister(feedbackIndices)),2);
+    
+    % working backwards, shift each data into next register
+    for regIndex = MPolynomialDegree:-1:2
+        MRegister(regIndex) = MRegister(regIndex-1);
+    end
+    
+    MRegister(1) = MInput;
+end
+
+end

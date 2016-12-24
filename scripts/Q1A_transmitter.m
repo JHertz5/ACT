@@ -114,5 +114,3 @@ if ~isempty(dataPath)
 else
     save('Q1A_transmitterOutput','symbols1','symbols2','symbols3')
 end
-
-%% TODO: Channel, Saving Channel output

@@ -25,12 +25,21 @@
 
 function [ symbolsOut ] = fChannel( paths, symbolsIn, delay, beta, DOA, SNR, array )
 
-numSources = length(paths);
+numPaths = sum(paths);
+numSources = size(symbolsIn, 1);
+symbolsLength = length(symbolsIn);
+
+transmissionLength = symbolsLength + max(delay);
+% zero fill where delays cause signal to end/start before/after others
+symbolsAccumulated = zeros(1,transmissionLength);
 
 for srcIndex = 1:numSources
     
-    % Copy symbols into each path
+    symbolsChannel = zeros(numPaths, symbolsLength);
     
+    for pathIndex = 1:paths(srcIndex) 
+        symbolsChannel(pathIndex,:) = symbolsIn(srcIndex,:);
+    end
     
     % Find paths of source
     firstPath = sum(paths(1:srcIndex-1)) + 1;
@@ -38,10 +47,18 @@ for srcIndex = 1:numSources
     srcPaths = (firstPath : lastPath)'; % used to get the delay, beta, and DOA of paths
 
     arrayManifoldVector = spv(array, DOA(srcPaths, :));
+    S_H = (conj(arrayManifoldVector))';
     
+    for pathIndex = 1:paths(srcIndex)
+        srcPathIndex = srcPaths(pathIndex);
+        symbolsChannel(pathIndex,:) = symbolsChannel(pathIndex,:) * S_H * beta(srcPathIndex);
+        
+        symbolsStart = delay(srcPathIndex);
+        symbolsEnd   = delay(srcPathIndex) + symbolsLength;
+        symbolsAccumulated(symbolsStart:symbolsEnd) = symbolsChannel(pathIndex,:);
+    end
     
-    
-    
+%     symbolsOut = symbolsAccumulated + 
     
 end
 

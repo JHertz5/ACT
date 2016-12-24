@@ -23,4 +23,42 @@
 % symbolsOut (FxN Complex) = F channel symbol chips received from each antenna
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [symbolsOut]=fChannel(paths,symbolsIn,delay,beta,DOA,SNR,array)
+function [ symbolsOut ] = fChannel( paths, symbolsIn, delay, beta, DOA, SNR, array )
+
+numSources = length(paths);
+
+for srcIndex = 1:numSources
+    
+    % Copy symbols into each path
+    
+    
+    % Find paths of source
+    firstPath = sum(paths(1:srcIndex-1)) + 1;
+    lastPath = sum(paths(1:srcIndex));
+    srcPaths = (firstPath : lastPath)'; % used to get the delay, beta, and DOA of paths
+
+    arrayManifoldVector = spv(array, DOA(srcPaths, :));
+    
+    
+    
+    
+    
+end
+
+
+
+
+%% Delay
+
+
+%% DOA Adjustment
+
+
+%% Fading
+
+
+%% MAI
+
+
+
+end

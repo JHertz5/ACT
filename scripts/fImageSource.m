@@ -20,8 +20,6 @@
 
 function [bitsOut,imgW,imgH]=fImageSource(filename,P)
 
-fprintf('fImageSource - \nfilename = %s\n', filename)
-
 %% Extracting Image
 
 img_raw = imread(filename);
@@ -53,12 +51,10 @@ for k = 1 : imgD
         for i = 1 : imgH
             byteStart = ((k-1)*layerSize + (imgH)*(j-1) + (i-1))*8 + 1;
             byteEnd   = ((k-1)*layerSize + (imgH)*(j-1) + i)*8;
-
-            bitsOut(byteStart:byteEnd) = de2bi( img_raw(i,j,k),8 );
+            
+            bitsOut(byteStart:byteEnd) = dec2bin( img_raw(i,j,k),8 );
         end
     end
 end
-
-fprintf('%s successfully read\n\n', filename);
 
 end

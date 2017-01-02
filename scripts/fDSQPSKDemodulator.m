@@ -16,59 +16,50 @@
 
 function [ bitsOut ] = fDSQPSKDemodulator( symbolsIn, goldSeq, phi )
 
-% chipPeriod and carrierPeriod are given nominal values
-T_carrier = 5; % carrier period
-T_chip = 1; % chip period
-chipsPerBit = T_carrier/T_chip; % chipsPerBit must be an integer value
+seqLength = length(goldSeq); % also the number of chips per bit
+symbolsLength = length(symbolsIn);
+bitPairsLength = symbolsLength/seqLength;
 
-chipsLength = length(symbolsIn);
-symbolLength = chipsLength/chipsPerBit;
-seqLength = length(goldSeq);
+bitPairsModulated = complex(zeros(bitPairsLength, 1), zeros(bitPairsLength, 1));
+bitsOut = zeros(bitPairsLength*2, 1, 'uint8');
 
 %% De-Spread using Gold Sequence
 
 % Change gold sequence form
 goldSeq = 1 - 2*goldSeq; % 1 -> -1, 0 -> 1
 
-symbolsModulated = complex(zeros(symbolLength, 1), zeros(symbolLength, 1));
-
-for chipIndex = 1:chipsLength
-    seqIndex = mod(chipIndex-1, seqLength) + 1; % index for gold sequence
-    symbolIndex = ceil(chipIndex/chipsPerBit); % index for QPSK symbols
+for symbolIndex = 1:symbolsLength
+    seqIndex = mod(symbolIndex-1, seqLength) + 1; % index for gold sequence
+    bitPairsIndex = ceil(symbolIndex/seqLength); % index for QPSK symbols
     
-    % Accumulate chips to be averaged later
-    symbolsModulated(symbolIndex) = symbolsModulated(symbolIndex) + goldSeq(seqIndex) * symbolsIn(chipIndex);    
+    % Accumulate chips to be averaged
+    bitPairsModulated(bitPairsIndex) = bitPairsModulated(bitPairsIndex) + goldSeq(seqIndex) * symbolsIn(symbolIndex);    
     
-    if mod(chipIndex, chipsPerBit) == 0
-        symbolsModulated(symbolIndex) = symbolsModulated(symbolIndex) / chipsPerBit;
+    % Every full gold sequence cycle, take the mean of the accumulation
+    if mod(symbolIndex, seqLength) == 0
+        bitPairsModulated(bitPairsIndex) = bitPairsModulated(bitPairsIndex) / seqLength;
     end
 end
 
 %% Perform QPSK de-modulation
 
 phi_rad = deg2rad(phi);
-bitsOut = zeros(symbolLength*2, 1, 'uint8');
 
-for symbolIndex = 1:symbolLength
+for bitPairsIndex = 1:bitPairsLength
     
     % Find phase angle
-    theta = angle(symbolsModulated(symbolIndex));
+    theta = angle(bitPairsModulated(bitPairsIndex));
     if theta < 0
         theta = theta + 2*pi;
     end
     
     % Convert phase angle to binary values    
-    bitPair = uint8((theta - phi_rad)*2/pi);
+    % This is the decision device. Signals have equal weight and 
+    % probability, so decision device is very simple
+    bitPair = mod(round((theta - phi_rad)*2/pi),4);
 
-
-    % check for invalid values
-    if bitPair < 0 || bitPair > 3
-        fprintf('ERROR: bitsInPaired contained value outside range 0-3: %i @ index %i\n', symbolsPaired(symbolIndex), symbolIndex)
-        return
-    end
-    
     % Split bit pairs into bits
-    bitsOut(2*symbolIndex - 1 : 2*symbolIndex) = de2bi(bitPair, 2, 'left-msb');
+    bitsOut(2*bitPairsIndex - 1 : 2*bitPairsIndex) = dec2bin(bitPair, 2);
 end
 
 end

@@ -23,59 +23,58 @@
 % symbolsOut (FxN Complex) = F channel symbol chips received from each antenna
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [ symbolsOut ] = fChannel( paths, symbolsIn, delay, beta, DOA, SNR, array )
+function [ symbolsOut ] = fChannel( paths, symbolsIn, delay, beta, DOA, SNR_db, array )
 
 numPaths = sum(paths);
 numSources = size(symbolsIn, 1);
-symbolsLength = length(symbolsIn);
-
+symbolsLength = size(symbolsIn, 2);
 transmissionLength = symbolsLength + max(delay);
-% zero fill where delays cause signal to end/start before/after others
-symbolsAccumulated = zeros(1,transmissionLength);
 
-for srcIndex = 1:numSources
+%% Calculate AWGN
+
+rng('default'); % Reset rng
+SNR_linear = 10^(SNR_db/10); % Find linear SNR
+E_symbol = sum(abs(symbolsIn(1,:).^2))/symbolsLength; % Find symbol energy
+N_0 = E_symbol/SNR_linear; % Find noise spectral density
+
+noiseSigma = sqrt(N_0/2);
+awgn = noiseSigma*(randn(transmissionLength,1) + 1j*randn(transmissionLength,1));
+
+%% Simulate Channel Paths
+
+% zero fill where delays cause signal to end/start before/after others
+symbolsAccumulated = zeros(transmissionLength,1);
+
+for pathIndex = 1:numPaths
     
-    symbolsChannel = zeros(numPaths, symbolsLength);
-    
-    for pathIndex = 1:paths(srcIndex) 
-        symbolsChannel(pathIndex,:) = symbolsIn(srcIndex,:);
+    %determine which source this path comes from
+    for srcIndex = 1:numSources
+        firstPath = sum(paths(1:srcIndex-1)) + 1;
+        lastPath = sum(paths(1:srcIndex));
+        
+        if pathIndex >= firstPath && pathIndex <= lastPath
+            pathSrc = srcIndex;
+            break
+        end
     end
     
-    % Find paths of source
-    firstPath = sum(paths(1:srcIndex-1)) + 1;
-    lastPath = sum(paths(1:srcIndex));
-    srcPaths = (firstPath : lastPath)'; % used to get the delay, beta, and DOA of paths
-
-    arrayManifoldVector = spv(array, DOA(srcPaths, :));
+    symbolsPath_initial = symbolsIn(pathSrc,:)';    
+    
+    arrayManifoldVector = spv(array, DOA(pathIndex, :));
     S_H = (conj(arrayManifoldVector))';
     
-    for pathIndex = 1:paths(srcIndex)
-        srcPathIndex = srcPaths(pathIndex);
-        symbolsChannel(pathIndex,:) = symbolsChannel(pathIndex,:) * S_H * beta(srcPathIndex);
-        
-        symbolsStart = delay(srcPathIndex);
-        symbolsEnd   = delay(srcPathIndex) + symbolsLength;
-        symbolsAccumulated(symbolsStart:symbolsEnd) = symbolsChannel(pathIndex,:);
-    end
+    % Add channel effects to symbols
+    symbolsPath = symbolsPath_initial * S_H * beta(pathIndex);
     
-%     symbolsOut = symbolsAccumulated + 
+    % Add symbols to accumulated channel symbols
+    symbolsStart = delay(pathIndex) + 1;
+    symbolsEnd   = delay(pathIndex) + symbolsLength;
+    symbolsAccumulated(symbolsStart:symbolsEnd) = symbolsAccumulated(symbolsStart:symbolsEnd) + symbolsPath;
     
 end
 
+%% Add noise to accumulated symbols
 
-
-
-%% Delay
-
-
-%% DOA Adjustment
-
-
-%% Fading
-
-
-%% MAI
-
-
+symbolsOut = symbolsAccumulated + awgn;
 
 end

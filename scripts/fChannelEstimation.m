@@ -18,4 +18,12 @@
 % desired signal
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [delay_estimate, DOA_estimate, beta_estimate]=fChannelEstimation(symbolsIn,goldseq)
+function [delay_estimate, DOA_estimate, beta_estimate]=fChannelEstimation(symbolsIn,goldSeq)
+
+symbolsLength = length(symbolsIn)/2;
+seqLength = length(goldSeq); % also the number of chips per bit
+
+
+
+
+end

@@ -134,7 +134,7 @@ fprintf('\t\tComplete\n')
 % Pilot Sequence is prepended to each transmission to allow the receiver to
 % estimate channel delay, which is then used to synchronise matched filters
 
-pilotSeq = [ 1 1 0 1 1 0 0 0 1 1 ]';
+pilotSeq = [ 1 1 0 1 1 0 1 0 1 1 ]';
 transmissiondata1 = cat(1,pilotSeq,img1);
 transmissiondata2 = cat(1,pilotSeq,img2);
 transmissiondata3 = cat(1,pilotSeq,img3);
@@ -290,25 +290,43 @@ if exist('showPlots', 'var') && showPlots >= 3
     clearvars symbolsOut_cleanChannel symbolsOut_singlePath*
 end
 
+%% Plot Receiver input
+
+if exist('showPlots', 'var') && showPlots >= 1
+    % Plot constellation diagram
+    figure
+    hold on
+    scatter(real(symbolsOut), imag(symbolsOut), 'b.')
+    line(xlim, [0 0], 'Color', 'black') % x axis line
+    line([0 0], ylim, 'Color', 'black') % y axis line
+    title('Constellation Diagram of QPSK symbols - Receiver Input')
+    ylabel('Imaginary Axis')
+    xlabel('Real Axis')
+    grid on
+end
+
 %% Receiver Start
 
 fprintf('Receiver\n')
 
-%% Estimate Delay using Pilot Sequence
+numPaths1 = paths(1);
+
+%% Estimate Delays using Pilot Sequence
 
 fprintf('\tEstimating channel delay ...\n')
 
-
 pilotSeqLength = length(pilotSeq);
 pilotSymbolsLength = pilotSeqLength/2*length(goldSeq1);
-pathSymbolsStart = zeros(3,1);
-pathSymbolsEnd   = zeros(3,1);
-pathSymbolsReceived = zeros(length(symbols1) - pilotSymbolsLength,3);
-delayEstimates = -ones(3,1);
+symbolsPathStart = zeros(numPaths1,1);
+symbolsPathEnd   = zeros(numPaths1,1);
+symbolsPathReceived = zeros(length(symbols1) - pilotSymbolsLength,numPaths1);
+delayEstimates = -ones(numPaths1,1);
 maxDelay = length(symbolsOut) - length(symbolsIn);
 
-for pathIndex = 1:3 % for each path of user 1's transmission
-    testOffset = 0;
+testOffset = 0;
+
+for pathIndex = 1:numPaths1 % for each path of user 1's transmission
+%     testOffset = 0;
     pilotSeqReceived = zeros(pilotSeqLength,1);
     while (delayEstimates(pathIndex) == -1) && (testOffset <= maxDelay)
         
@@ -334,64 +352,77 @@ for pathIndex = 1:3 % for each path of user 1's transmission
         delayEstimates(pathIndex) = delay(pathIndex);
         fprintf('NOTE: Delay %i could not be found, using actual value without estimation\n', pathIndex)
     end
-        
+end    
+    
+%% Extract Received Signals
+
+for pathIndex = 1:numPaths1 % for each path of user 1's transmission
     % Extract delayed signal and compensate for fading by dividing with beta
-    pathSymbolsStart(pathIndex) = pilotSymbolsLength + delayEstimates(pathIndex) + 1;
-    pathSymbolsEnd(pathIndex)   = length(symbols1) + delayEstimates(pathIndex); % symbols1 includes pilot symbols, so no need to add pilot symbols length
-    pathSymbolsReceived(:,pathIndex) = symbolsOut(pathSymbolsStart(pathIndex):pathSymbolsEnd(pathIndex))./beta(pathIndex);
+    symbolsPathStart(pathIndex) = pilotSymbolsLength + delayEstimates(pathIndex) + 1;
+    symbolsPathEnd(pathIndex)   = length(symbols1) + delayEstimates(pathIndex); % symbols1 includes pilot symbols, so no need to add pilot symbols length
+    symbolsPathReceived(:,pathIndex) = symbolsOut(symbolsPathStart(pathIndex):symbolsPathEnd(pathIndex))./beta(pathIndex);
 end
+
+% Diversity combining - Max Ratio Combining
+% Signals are weighted w.r.t. their SNR, then summed
+symbolsReceivedMRC = (symbolsPathReceived(:,1)+0.5.*symbolsPathReceived(:,2)+symbolsPathReceived(:,3))./2.5;
 
 fprintf('\t\tComplete\n')
-
-%% Plot Receiver input
-
-if exist('showPlots', 'var') && showPlots >= 1
-    % Plot constellation diagram
-    figure
-    hold on
-    scatter(real(symbolsOut), imag(symbolsOut), 'b.')
-    line(xlim, [0 0], 'Color', 'black') % x axis line
-    line([0 0], ylim, 'Color', 'black') % y axis line
-    title('Constellation Diagram of QPSK symbols - Receiver Input')
-    ylabel('Imaginary Axis')
-    xlabel('Real Axis')
-    grid on
-end
 
 %% Perform DS-QPSK demodulation
 
 fprintf('\tPerforming DS-QPSK de-modulation ...\n')
+fprintf('\t\tDe-modulating image 1\n')
 
-pathImgReceived = zeros(length(img1), 3);
-for pathIndex = 1:3
-    fprintf('\t\tDe-modulating path %i\n', pathIndex)
-    pathImgReceived(:,pathIndex) = fDSQPSKDemodulator(pathSymbolsReceived(:,pathIndex) , goldSeq1, phi);
+% Demodulate individual paths just to compare to result
+imgPathReceived = zeros(length(img1), numPaths1);
+for pathIndex = 1:numPaths1
+    fprintf('\t\t\tPath %i (for analysis)\n',pathIndex)
+    imgPathReceived(:,pathIndex) = fDSQPSKDemodulator(symbolsPathReceived(:,pathIndex) , goldSeq1, phi);
 end
+
+% Demodulate actual version
+fprintf('\t\t\tCombined paths\n')
+imgReceivedMRC = fDSQPSKDemodulator(symbolsReceivedMRC, goldSeq1, phi);
 
 fprintf('\t\tComplete\n')
 
 %% Analysis of Receiver Data
 
+fprintf('\tAnalysing received images ... \n')
+
 figure
-subplot(2,2,1)
+% Plot original
+subplot(3,1,1)
 fImageSink(img1, imgSize, imgW, imgH)
 title('Original')
 
-pathErrorRatio = zeros(3,1);
-
-for pathIndex = 1:3
-    pathErrorRatio(pathIndex) = length(find(img1 ~= pathImgReceived(:,pathIndex)))/length(img1);
-    fprintf('\t%f%% of received image values are incorrect\n',pathErrorRatio(pathIndex)*100)
+pathErrorRatio = zeros(numPaths1+1,1);
+% Plot individual paths
+for pathIndex = 1:numPaths1
+    pathErrorRatio(pathIndex) = length(find(img1 ~= imgPathReceived(:,pathIndex)))/length(img1);
+    fprintf('\t\t%f%% of path %i received image values are incorrect (Channel SNR = %idB)\n',pathErrorRatio(pathIndex)*100,pathIndex,SNR_dB)
     
     if exist('showPlots', 'var') && showPlots >= 1
-        % Display images
-        fprintf('\tPlotting received image 1\n')
-        
-        subplot(2,2,pathIndex+1)
-        fImageSink(pathImgReceived(:,pathIndex), imgSize, imgW, imgH)
-        title('Received')
+        % Display images        
+        subplot(3,3,pathIndex+3)
+        fImageSink(imgPathReceived(:,pathIndex), imgSize, imgW, imgH)
+        title(['Received - path ', num2str(pathIndex)])
     end
 end
+
+% Plot path mean
+pathErrorRatio(4) = length(find(img1 ~= imgReceivedMRC))/length(img1);
+fprintf('\t\t%f%% of combined received image values are incorrect (Channel SNR = %idB)\n',pathErrorRatio(4)*100,SNR_dB)
+
+if exist('showPlots', 'var') && showPlots >= 1
+    % Display images    
+    subplot(3,1,3)
+    fImageSink(imgReceivedMRC, imgSize, imgW, imgH)
+    title('Received - combined paths')
+end
+
+fprintf('\t\tComplete\n')
 
 %% End of Simulation
 

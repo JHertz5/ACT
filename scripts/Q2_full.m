@@ -3,13 +3,7 @@ close all
 clearvars -EXCEPT showPlots SNR_dB
 
 %add data directory to path
-if contains(pwd, 'ACT')
-    dataPath = strcat( extractBefore(pwd, 'ACT'), 'ACT/data');
-    addpath(char(dataPath));
-else
-    dataPath = ''; %dataPath is empty vector
-    fprintf('Move to ACT directory\n');
-end
+addpath('data')
 
 fprintf('Q2\n')
 
@@ -95,37 +89,6 @@ fprintf('\t\tdelayGold = %i  is the smallest integer to satsfy inequality and pr
 
 goldSeq2 = fGoldSeq(MSeq1, MSeq2, delayGold + 1); % gold sequence for user 2 uses d + 1
 goldSeq3 = fGoldSeq(MSeq1, MSeq2, delayGold + 2); % gold sequence for user 3 uses d + 2
-
-if exist('showPlots', 'var') && showPlots >= 3
-    figure
-    
-    subplot (2,2,1) % top left
-    stairs(MSeq1, 'LineWidth', 2, 'Marker', 'x')
-    ylabel('PN Sequence 1')
-    xlim([1 15])
-    
-    subplot (2,2,3) % bottom left
-    stairs(MSeq2, 'LineWidth', 2, 'Marker', 'x')
-    ylabel('PN Sequence 2')
-    xlabel('Sequence index')
-    xlim([1 15])
-    
-    subplot (3,2,2) % top right
-    stairs(goldSeq1, 'LineWidth', 2, 'Marker', 'x')
-    ylabel('Gold Seq 1')
-    xlim([1 15])
-    
-    subplot (3,2,4) % middle right
-    stairs(goldSeq2, 'LineWidth', 2, 'Marker', 'x')
-    ylabel('Gold Seq 2')
-    xlim([1 15])
-    
-    subplot (3,2,6) % bottom right
-    stairs(goldSeq3, 'LineWidth', 2, 'Marker', 'x')
-    ylabel('Gold Seq 3')
-    xlabel('Sequence index')
-    xlim([1 15])
-end
 
 fprintf('\t\tComplete\n')
 

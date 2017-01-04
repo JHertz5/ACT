@@ -16,14 +16,14 @@
 
 function [ goldSeq ] = fGoldSeq( MSeq1, MSeq2, shift )
 
-codeLength = length(MSeq1); % W
+seqLength = length(MSeq1); % W
 
-goldSeq = zeros(codeLength, 1); % pre-allocate memory
+goldSeq = zeros(seqLength, 1); % pre-allocate memory
 
-for seqIndex = 1:codeLength
+for seqIndex = 1:seqLength
     % find delayed index 
-    if seqIndex + shift > 15
-        seq2Index = mod(seqIndex + shift, codeLength); % if statement to ensure that index 0 is skipped
+    if seqIndex + shift > seqLength
+        seq2Index = mod(seqIndex + shift, seqLength); % if statement to ensure that index 0 is skipped
     else
         seq2Index = seqIndex + shift;
     end

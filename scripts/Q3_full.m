@@ -128,7 +128,7 @@ fprintf('Channel\n')
 fprintf('\tInitialising channel values ...\n')
 
 paths = [ 1; 1; 1 ];
-symbolsIn = (cat(2, symbols1, symbols2, symbols3))';
+symbolsIn = (cat(2, symbols1, symbols2, symbols3)).';
 delay = [ 3; 7; 12 ];
 beta  = [ 0.4; 0.7; 0.2 ];
 DOA = [ 30 0; 90 0; 150 0 ];
@@ -275,8 +275,7 @@ fprintf('Note: Currently there is no delay estimation\n')
 % Would ideally have used superresolution beamformer, but not enough time
 beamformWeightWH = inv(covarianceMatrix)*(spv(array,DOAest(1,:)));
 
-% conjugate is needed to get correct answer, no idea why
-symbolsReceived = conj(beamformWeightWH'*symbolsOut);
+symbolsReceived = beamformWeightWH'*symbolsOut;
 
 if showPlots >= 1
     % Plot beamformer information as a polar and euclidean plot

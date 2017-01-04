@@ -26,8 +26,7 @@
 function [ symbolsOut ] = fChannel( paths, symbolsIn, delay, beta, DOA, SNR_db, array )
 
 numPaths = sum(paths);
-numSources = size(symbolsIn, 1);
-symbolsLength = size(symbolsIn, 2);
+[ numSources, symbolsLength ] = size(symbolsIn);
 transmissionLength = symbolsLength + max(delay);
 numSensors = size(array,1);
 
@@ -38,16 +37,15 @@ SNR_linear = 10^(SNR_db/10); % Find linear SNR
 E_symbol = sum(abs(symbolsIn(1,:).^2))/symbolsLength; % Find symbol energy
 N_0 = E_symbol/SNR_linear; % Find noise spectral density
 
-noiseSigma = sqrt(N_0/2); % noise amplitude
+noiseSigma = sqrt(N_0/2);
 awgn = noiseSigma*(randn(transmissionLength,numSensors) + 1j*randn(transmissionLength,numSensors));
 
 %% Simulate Channel Paths
 
-% zero fill where delays cause signal to end/start before/after others
-symbolsAccumulated = zeros(transmissionLength,numSensors);
+arrayManifoldMatrix = spv(array, DOA);
 
+messagesMatrix = zeros(numPaths, transmissionLength);
 for pathIndex = 1:numPaths
-    
     %determine which source this path comes from
     for srcIndex = 1:numSources
         firstPath = sum(paths(1:srcIndex-1)) + 1;
@@ -59,22 +57,12 @@ for pathIndex = 1:numPaths
         end
     end
     
-    symbolsPath_initial = symbolsIn(pathSrc,:).';    
-    
-    arrayManifoldVector = spv(array, DOA(pathIndex, :));
-    
-    % Add channel effects to symbols
-    symbolsPath = (beta(pathIndex) .* symbolsPath_initial) * arrayManifoldVector.' ;
-    
-    % Add symbols to accumulated channel symbols
-    symbolsStart = delay(pathIndex) + 1;
-    symbolsEnd   = delay(pathIndex) + symbolsLength;
-    symbolsAccumulated(symbolsStart:symbolsEnd,:) = symbolsAccumulated(symbolsStart:symbolsEnd,:) + symbolsPath;
-    
+    symbolsRange = delay(pathIndex)+1 : delay(pathIndex)+symbolsLength;
+    messagesMatrix(pathIndex,symbolsRange) = beta(pathIndex) .* symbolsIn(pathSrc,:);
 end
 
-%% Add noise to accumulated symbols
+%% Combine Matrices
 
-symbolsOut = symbolsAccumulated + awgn;
+symbolsOut = (arrayManifoldMatrix*messagesMatrix).' + awgn;
 
 end

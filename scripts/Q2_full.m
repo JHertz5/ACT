@@ -138,7 +138,7 @@ fprintf('Channel\n')
 fprintf('\tInitialising channel values ...\n')
 
 paths = [ 3; 1; 1 ];
-symbolsIn = (cat(2, symbols1, symbols2, symbols3))';
+symbolsIn = (cat(2, symbols1, symbols2, symbols3)).';
 delay = [ mod(X+Y,4); 4+mod(X+Y,5); 9+mod(X+Y,6); 8; 13 ];
 beta  = [ 0.8; 0.4*exp(-1j*deg2rad(40)); 0.8*exp(1j*deg2rad(80)); 0.5; 0.2 ];
 DOA = [ 30 0; 45 0; 20 0; 80 0; 150 0 ];

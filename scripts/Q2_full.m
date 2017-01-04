@@ -192,71 +192,13 @@ symbolsOut = fChannel(paths, symbolsIn, delay, beta, DOA, SNR_dB, array); % SNR 
 fprintf('\t\tComplete\n')
 
 %% Plotting Channel Data
-if exist('showPlots', 'var') && showPlots >= 5
-    
-    % Plot SNR examples
-    
-    symbolsOut_0  = fChannel(paths, symbolsIn, delay, beta, DOA,  0, array); % SNR = 0dB
-    symbolsOut_20 = fChannel(paths, symbolsIn, delay, beta, DOA, 20, array); % SNR = 20dB
-    symbolsOut_30 = fChannel(paths, symbolsIn, delay, beta, DOA, 30, array); % SNR = 30dB
-    symbolsOut_40 = fChannel(paths, symbolsIn, delay, beta, DOA, 40, array); % SNR = 40dB
-    
-    figure
-    
-    subplot(2,2,1)
-    scatter(real(symbolsOut_0), imag(symbolsOut_0), 'yx')
-    hold on
-    scatter(real(symbols1), imag(symbols1), 'bx', 'LineWidth', 2)
-    line(xlim, [0 0], 'Color', 'black') % x axis line
-    line([0 0], ylim, 'Color', 'black') % y axis line
-    title('Channel Outpt - SNR = 0dB')
-    ylabel('Imaginary Axis')
-    xlabel('Real Axis')
-    grid on
-    
-    subplot(2,2,2)
-    scatter(real(symbolsOut_20), imag(symbolsOut_20), 'yx')
-    hold on
-    scatter(real(symbols1), imag(symbols1), 'bx', 'LineWidth', 2)
-    xlim([-2 2]);
-    line(xlim, [0 0], 'Color', 'black') % x axis line
-    line([0 0], ylim, 'Color', 'black') % y axis line
-    title('SNR = 20dB')
-    ylabel('Imaginary Axis')
-    xlabel('Real Axis')
-    grid on
-    
-    subplot(2,2,3)
-    scatter(real(symbolsOut_30), imag(symbolsOut_30), 'yx')
-    hold on
-    scatter(real(symbols1), imag(symbols1), 'bx', 'LineWidth', 2)
-    line(xlim, [0 0], 'Color', 'black') % x axis line
-    line([0 0], ylim, 'Color', 'black') % y axis line
-    title('SNR = 30dB')
-    ylabel('Imaginary Axis')
-    xlabel('Real Axis')
-    grid on
-    
-    subplot(2,2,4)
-    scatter(real(symbolsOut_40), imag(symbolsOut_40), 'yx')
-    hold on
-    scatter(real(symbols1), imag(symbols1), 'bx', 'LineWidth', 2)
-    line(xlim, [0 0], 'Color', 'black') % x axis line
-    line([0 0], ylim, 'Color', 'black') % y axis line
-    title('SNR = 40dB')
-    ylabel('Imaginary Axis')
-    xlabel('Real Axis')
-    grid on
-    
-    clearvars symbolsOut_* % clear temporary values
-end
 
 if exist('showPlots', 'var') && showPlots >= 3
     
     % Plot examples for individual paths
     symbolsOut_singlePath1 = fChannel(1, symbols1', delay(1), beta(1), DOA(1,:), 40, array);
-    symbolsOut_singlePath2 = fChannel(1, symbols2', delay(2), beta(2), DOA(2,:), 40, array);
-    symbolsOut_singlePath3 = fChannel(1, symbols3', delay(3), beta(3), DOA(3,:), 40, array);
+    symbolsOut_singlePath2 = fChannel(1, symbols1', delay(2), beta(2), DOA(2,:), 40, array);
+    symbolsOut_singlePath3 = fChannel(1, symbols1', delay(3), beta(3), DOA(3,:), 40, array);
     
     % plot clean channel
     figure

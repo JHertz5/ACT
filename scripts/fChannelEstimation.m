@@ -20,10 +20,11 @@
 
 function [delay_estimate, DOA_estimate, beta_estimate]=fChannelEstimation(symbolsIn,goldSeq)
 
-symbolsLength = length(symbolsIn)/2;
-seqLength = length(goldSeq); % also the number of chips per bit
 
+%% Spatio-Temporal Array manifold vector
 
+g(theta,l) = w^H*h(theta,l)
 
+STARmanifoldVector = 
 
 end

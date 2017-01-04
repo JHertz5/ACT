@@ -29,6 +29,7 @@ numPaths = sum(paths);
 numSources = size(symbolsIn, 1);
 symbolsLength = size(symbolsIn, 2);
 transmissionLength = symbolsLength + max(delay);
+numSensors = size(array,1);
 
 %% Calculate AWGN
 
@@ -37,13 +38,13 @@ SNR_linear = 10^(SNR_db/10); % Find linear SNR
 E_symbol = sum(abs(symbolsIn(1,:).^2))/symbolsLength; % Find symbol energy
 N_0 = E_symbol/SNR_linear; % Find noise spectral density
 
-noiseSigma = sqrt(N_0/2);
-awgn = noiseSigma*(randn(transmissionLength,1) + 1j*randn(transmissionLength,1));
+noiseSigma = sqrt(N_0/2); % noise amplitude
+awgn = noiseSigma*(randn(transmissionLength,numSensors) + 1j*randn(transmissionLength,numSensors));
 
 %% Simulate Channel Paths
 
 % zero fill where delays cause signal to end/start before/after others
-symbolsAccumulated = zeros(transmissionLength,1);
+symbolsAccumulated = zeros(transmissionLength,numSensors);
 
 for pathIndex = 1:numPaths
     
@@ -58,18 +59,17 @@ for pathIndex = 1:numPaths
         end
     end
     
-    symbolsPath_initial = symbolsIn(pathSrc,:)';    
+    symbolsPath_initial = symbolsIn(pathSrc,:).';    
     
     arrayManifoldVector = spv(array, DOA(pathIndex, :));
-    S_H = (conj(arrayManifoldVector))';
     
     % Add channel effects to symbols
-    symbolsPath = symbolsPath_initial * S_H * beta(pathIndex);
+    symbolsPath = (beta(pathIndex) .* symbolsPath_initial) * arrayManifoldVector.' ;
     
     % Add symbols to accumulated channel symbols
     symbolsStart = delay(pathIndex) + 1;
     symbolsEnd   = delay(pathIndex) + symbolsLength;
-    symbolsAccumulated(symbolsStart:symbolsEnd) = symbolsAccumulated(symbolsStart:symbolsEnd) + symbolsPath;
+    symbolsAccumulated(symbolsStart:symbolsEnd,:) = symbolsAccumulated(symbolsStart:symbolsEnd,:) + symbolsPath;
     
 end
 

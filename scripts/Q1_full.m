@@ -298,35 +298,33 @@ fprintf('Receiver\n')
 fprintf('\tEstimating channel delay ...\n')
 
 testOffset = 0;
-delay1Found = false;
+pilotSeqLength = length(pilotSeq);
 pilotSymbolsLength = length(pilotSeq)/2*length(goldSeq1);
+maxDelay = length(symbolsOut) - length(symbolsIn);
+delayEst = -1;
 
-maxPossibleDelay = length(symbolsOut) - length(symbolsIn);
-
-while ~delay1Found 
+while (delayEst == -1) && (testOffset <= maxDelay)
     pilotSymbolsRange = testOffset+1:pilotSymbolsLength+testOffset;
     
     pilotSeqReceived = fDSQPSKDemodulator(symbolsOut(pilotSymbolsRange), goldSeq1, phi);
     
     if all(pilotSeqReceived == pilotSeq) % once the pilot sequence matches the original
-       delay1 = testOffset;
-       delay1Found = true;
-       fprintf('\t\tDelay estimated to be %i\n', delay1)
+       delayEst = testOffset;
+       fprintf('\t\tDelay estimated to be %i\n', delayEst)
     else
         testOffset = testOffset + 1;
-        
-        % if delay could not be found, we will 'cheat' for the purposes of
-        % completing the simulation
-        if testOffset > maxPossibleDelay
-            delay1 = delay(1);
-            fprintf('NOTE: Delay could not be found, using actual value without estimation\n')
-            break
-        end
-    end 
+    end
 end
 
-img1SymbolsStart = pilotSymbolsLength + delay1 + 1;
-img1SymbolsEnd   = length(symbols1) + delay1; % symbols1 includes pilot symbols, so no need to add pilot symbols length
+% if delay could not be found, we will 'cheat' for the purposes of completing the simulation
+if delayEst == -1
+    delayEst = delay(1);
+    fprintf('NOTE: Delay could not be found, using actual value without estimation\n')
+end
+
+img1SymbolsStart = pilotSymbolsLength + delayEst + 1;
+img1SymbolsEnd   = length(symbols1) + delayEst; % symbols1 includes pilot symbols, so no need to add pilot symbols length
+symbolsReceived = symbolsOut(img1SymbolsStart:img1SymbolsEnd);
 
 fprintf('\t\tComplete\n')
 
@@ -349,7 +347,7 @@ end
 
 fprintf('\tPerforming DS-QPSK de-modulation ...\n')
 fprintf('\t\tDe-modulating image 1\n')
-imgReceived1 = fDSQPSKDemodulator(symbolsOut(img1SymbolsStart:img1SymbolsEnd), goldSeq1, phi);
+imgReceived1 = fDSQPSKDemodulator(symbolsReceived, goldSeq1, phi);
 
 fprintf('\t\tComplete\n')
 

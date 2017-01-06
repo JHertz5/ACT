@@ -40,7 +40,7 @@ N_0 = E_symbol/SNR_linear; % Find noise spectral density
 noiseSigma = sqrt(N_0/2);
 awgn = noiseSigma*(randn(transmissionLength,numSensors) + 1j*randn(transmissionLength,numSensors));
 
-%% Simulate Channel Paths
+%% Set Up Matrices
 
 arrayManifoldMatrix = spv(array, DOA);
 
@@ -61,8 +61,10 @@ for pathIndex = 1:numPaths
     messagesMatrix(pathIndex,symbolsRange) = beta(pathIndex) .* symbolsIn(pathSrc,:);
 end
 
-%% Combine Matrices
+%% Perform Channel Modelling
 
-symbolsOut = (arrayManifoldMatrix*messagesMatrix).' + awgn;
+% transpose is performed in order to match (FxN) requirement of wrapper,
+% but is redundant as the result is transposed back in each script anyway
+symbolsOut = (arrayManifoldMatrix*messagesMatrix).' + awgn; 
 
 end

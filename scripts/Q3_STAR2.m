@@ -270,6 +270,107 @@ fprintf('Note: Currently there is no delay estimation\n')
 
 fprintf('\t\tComplete\n')
 
+%% Attempted STAR estimation
+
+
+%% Discretiser and Manifold Extender
+
+fprintf('\tPerforming spatiotemporal data transformation...\n')
+
+seqLength = length(goldSeq1);
+
+symbolsOutSamples = symbolsOut(1:10000);
+
+% Generate spaciotemporal samples
+numTdlSamples = length(symbolsOutSamples);
+extensionLength = 2*seqLength;
+X = zeros(numAntennas*extensionLength, numTdlSamples);
+tappedDelays = zeros(numAntennas, extensionLength);
+
+% Fill tappedDelays
+for sampleIndex = 1:62
+    for tapIndex = 1:extensionLength-1
+        tappedDelays(:,tapIndex) = tappedDelays(:,tapIndex+1);
+    end
+    tappedDelays(:,end) = symbolsOutSamples(:,sampleIndex);
+end
+
+for sampleIndex = 1:numTdlSamples
+    X(:,sampleIndex) = reshape(tappedDelays.',[],1); % store vectorised data
+    
+    % step tapped delays
+    for tapIndex = 1:extensionLength-1
+        tappedDelays(:,tapIndex) = tappedDelays(:,tapIndex+1);
+    end
+    tappedDelays(:,end) = symbolsOut(:,sampleIndex);
+end
+
+fprintf('\t\tComplete\n')
+
+%% Spatiotemporal Channel Estimator
+
+fprintf('\tPerforming channel parameter estimation ...\n')
+
+covarianceMatrix = X*X'/numTdlSamples; % find covariance mantrix
+[eigenVecs,eigenVals] = eig(covarianceMatrix); %eigenvalue decomposition
+eigenVals = diag(eigenVals);
+plot(eigenVals)
+
+noiseSubspaceRange = 1 : find(eigenVals<0.02,1,'last');
+eigVecsNoise = eigenVecs(:,noiseSubspaceRange); % Noise eigenvectors
+
+doaRange = (0:1:360)'; % Azimuth values to search
+toaRange = (0:1:seqLength-1)'; % Elevation values to search
+
+packedPNcode = [goldSeq1;zeros(size(goldSeq1))];
+% Generate shifting matrix
+shiftMatrix = zeros(2*seqLength);
+shiftMatrix(2:end,1:end-1) = eye(2*seqLength-1);
+
+% MUSIC spectrum computation
+musicAmplitude = zeros(length(doaRange),length(toaRange));
+for toaIndex = 1:length(toaRange)
+    % Elevation search value
+    toaTest = toaRange(toaIndex);
+    
+    for doaIndex = 1:length(doaRange)
+        doaTest = doaRange(doaIndex);
+        
+        spaceManifoldVector = spv(array, [ doaTest 0 ]);
+        timeManifoldVector  = (shiftMatrix^toaTest)*packedPNcode;
+        intersectionSearch  = kronProd(spaceManifoldVector,timeManifoldVector); % Kronecker Product
+        
+        % Compute azimuth spectrum for this elevation
+        musicAmplitude(doaIndex,toaIndex) = sum(abs(intersectionSearch'*eigVecsNoise).^2,2);
+    end
+end
+
+musicAmplitude_dB = -10*log10(musicAmplitude.'/numAntennas);
+ 
+if showPlots >= 1
+    % Plot MUSIC spectrum
+    figure;
+    surf(doaRange, toaRange, musicAmplitude_dB);
+    shading interp;
+    title('MUSIC Spectrum');
+    xlabel('Azimuth (degrees)');
+    ylabel('TOA');
+    zlabel('MUSIC spectrum (dB)');
+    grid on; axis tight;
+end
+
+% find top 3 values to be DOA estimates
+musicAmplitudeSorted = sort( reshape(musicAmplitude_dB,length(doaRange)*length(toaRange),1), 'descend');
+musicTop3Threshold = musicAmplitudeSorted(4);
+
+[ toaMaxIndex, doaMaxIndex ] = find(musicAmplitude_dB > musicTop3Threshold);
+DOAest = doaRange(doaMaxIndex);
+TOAest = toaRange(toaMaxIndex);
+% 
+% fprintf('\t\tDOAs estimated as: \n')
+% for i = 1:size(DOAest,1)
+%     fprintf('\t\t\tSig %i: Az = %i deg, El = %i deg\n', i, DOAest(i,1), DOAest(i,2))
+% end
 
 %% Receiver Reception
 % Use weiner-hopf beamformer to receive signals
@@ -278,16 +379,29 @@ fprintf('\tReceiving using beamformer ...\n')
 
 % Calculate Weiner-Hopf beamformer weights
 % Would ideally have used superresolution beamformer, but not enough time
-beamformWeightWH = inv(covarianceMatrix)*(spv(array,DOAest(1,:)));
+% beamformWeightWH = inv(covarianceMatrix)*(spv(array,DOAest(1,:)));
+% 
+% symbolsReceived = beamformWeightWH'*symbolsOut;
 
-symbolsReceived = beamformWeightWH'*symbolsOut;
+DOAest = 30;
+TOAest = 3;
+
+
+fprintf('\tReceiving using beamformer ...\n')
+
+spaceManifoldVector = spv(array, [ DOAest(1) 0 ]);
+timeManifoldVector  = (shiftMatrix^TOAest(1))*packedPNcode;
+beamformWeights  = kron(spaceManifoldVector,timeManifoldVector)*beta(1); % Kronecker Product
+
+symbolsReceived = (X.'*beamformWeights)./beta(1);
+
 
 if showPlots >= 1
     % Plot beamformer information as a polar and euclidean plot
     az = 0:360;
     gain = zeros(size(az)); % only plotting in azimuth
     for azIndex = 1:length(az)
-        gain(azIndex) = abs(beamformWeightWH'*spv(array,[az(azIndex) 0]));
+        gain(azIndex) = abs(beamformWeights'*spv(array,[az(azIndex) 0]));
     end
     gain = 10*log10(gain);
     

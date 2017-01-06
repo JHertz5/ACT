@@ -22,7 +22,7 @@ fprintf('SNR set to %i dB\n', SNR_dB);
 % showPlots
 if ~exist('showPlots', 'var') || isempty(showPlots)
     showPlots = input('INPUT REQUIRED: Enter showPlots value: ');
-    if isempty(SNR_dB)
+    if isempty(showPlots)
         showPlots = 1;
         fprintf('\tshowPlots set to default value of 1\n')
     end
@@ -157,7 +157,7 @@ fprintf('\t\tComplete\n')
 %% Plotting Channel Data
 
 if exist('showPlots', 'var') && showPlots >= 3
-    
+    fprintf('\tPlotting channel effects ...\n')
     % Plot examples for individual paths
     symbolsOut_singlePath1 = fChannel(1, symbols1', delay(1), beta(1), DOA(1,:), 40, array);
     symbolsOut_singlePath2 = fChannel(1, symbols1', delay(2), beta(2), DOA(2,:), 40, array);
@@ -193,6 +193,8 @@ if exist('showPlots', 'var') && showPlots >= 3
     grid on
     
     clearvars symbolsOut_cleanChannel symbolsOut_singlePath*
+    
+    fprintf('\t\tComplete\n')
 end
 
 %% Plot Receiver input

@@ -3,20 +3,14 @@ close all
 clearvars -EXCEPT showPlots SNR_dB
 
 %add data directory to path
-if contains(pwd, 'ACT')
-    dataPath = strcat( extractBefore(pwd, 'ACT'), 'ACT/data');
-    addpath(char(dataPath));
-else
-    dataPath = ''; %dataPath is empty vector
-    fprintf('Move to ACT directory\n');
-end
+addpath('data')
 
 fprintf('Q1\n')
 
 %% Initialise Values
 
 % SNR_dB
-if ~exist('SNR_dB', 'var')
+if ~exist('SNR_dB', 'var') || isempty(SNR_dB)
     SNR_dB = input('INPUT REQUIRED: Enter channel SNR level in dB: ');
     if isempty(SNR_dB)
         SNR_dB = 40;
@@ -28,7 +22,7 @@ fprintf('SNR set to %i dB\n', SNR_dB);
 % showPlots
 if ~exist('showPlots', 'var') || isempty(showPlots)
     showPlots = input('INPUT REQUIRED: Enter showPlots value: ');
-    if isempty(SNR_dB)
+    if isempty(showPlots)
         showPlots = 1;
         fprintf('\tshowPlots set to default value of 1\n')
     end
@@ -134,7 +128,7 @@ fprintf('\t\tComplete\n')
 % Pilot Sequence is prepended to each transmission to allow the receiver to
 % estimate channel delay, which is then used to synchronise matched filters
 
-pilotSeq = [ 0 0 1 1 0 0 1 1 ]';
+pilotSeq = [ 0 0 1 0 0 1 0 1 1 1 ]';
 transmissiondata1 = cat(1,pilotSeq,img1);
 transmissiondata2 = cat(1,pilotSeq,img2);
 transmissiondata3 = cat(1,pilotSeq,img3);
@@ -321,6 +315,8 @@ if delayEst == -1
     delayEst = delay(1);
     fprintf('NOTE: Delay could not be found, using actual value without estimation\n')
 end
+
+% delayEst = delay(1);
 
 img1SymbolsStart = pilotSymbolsLength + delayEst + 1;
 img1SymbolsEnd   = length(symbols1) + delayEst; % symbols1 includes pilot symbols, so no need to add pilot symbols length
